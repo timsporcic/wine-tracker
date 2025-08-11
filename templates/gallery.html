@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Gallery - Wine Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main-content { padding: 0; }
+    .footer { display: none; }
+    .navbar { position: absolute; z-index: 1000; background: transparent; }
+    .navbar.scrolled { background: rgba(0,0,0,0.9); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gallery-container" id="galleryContainer">
+    {% if wines %}
+    <div class="gallery-slides" id="gallerySlides">
+        {% for wine in wines %}
+        <div class="gallery-slide" data-index="{{ loop.index0 }}">
+            <div class="slide-image">
+                <img src="/{{ wine.image_path }}" 
+                     alt="{{ wine.wine_name }}" loading="lazy">
+            </div>
+            <div class="slide-overlay">
+                <div class="slide-content">
+                    <h2>{{ wine.wine_name }}</h2>
+                    <h3>{{ wine.vineyard_name }}</h3>
+                    <div class="slide-meta">
+                        <span class="vintage">{{ wine.vintage_year }}</span>
+                        <span class="rating">
+                            {% for i in range(wine.rating) %}★{% endfor %}
+                        </span>
+                    </div>
+                    <div class="slide-date">Added {{ wine.date_added.strftime('%B %d, %Y') }}</div>
+                    {% if wine.notes %}
+                    <div class="slide-notes">
+                        <p>{{ wine.notes }}</p>
+                    </div>
+                    {% endif %}
+                    <a href="{{ url_for('wine.view_wine', wine_id=wine.id) }}" 
+                       class="btn btn-outline">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="gallery-nav">
+        <button class="gallery-nav-btn prev" id="prevBtn">↑</button>
+        <button class="gallery-nav-btn next" id="nextBtn">↓</button>
+    </div>
+    
+    <div class="gallery-indicator">
+        <span id="currentSlide">1</span> / <span>{{ wines|length }}</span>
+    </div>
+    {% else %}
+    <div class="empty-gallery">
+        <h2>No wines to display</h2>
+        <p>Add some wines to start browsing your collection</p>
+        <a href="{{ url_for('wine.add_wine') }}" class="btn btn-primary">Add Wine</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+let currentIndex = 0;
+const slides = document.querySelectorAll('.gallery-slide');
+const totalSlides = slides.length;
+const container = document.getElementById('gallerySlides');
+const currentSlideSpan = document.getElementById('currentSlide');
+const navbar = document.querySelector('.navbar');
+
+function showSlide(index) {
+    if (index < 0) index = totalSlides - 1;
+    if (index >= totalSlides) index = 0;
+    
+    currentIndex = index;
+    container.style.transform = `translateY(-${index * 100}vh)`;
+    currentSlideSpan.textContent = index + 1;
+    
+    slides.forEach((slide, i) => {
+        if (i === index) {
+            slide.classList.add('active');
+            const img = slide.querySelector('img');
+            if (img && img.dataset.src) {
+                img.src = img.dataset.src;
+                delete img.dataset.src;
+            }
+        } else {
+            slide.classList.remove('active');
+        }
+    });
+}
+
+function nextSlide() {
+    showSlide(currentIndex + 1);
+}
+
+function prevSlide() {
+    showSlide(currentIndex - 1);
+}
+
+document.getElementById('nextBtn').addEventListener('click', nextSlide);
+document.getElementById('prevBtn').addEventListener('click', prevSlide);
+
+// Touch/swipe support
+let touchStartY = 0;
+let touchEndY = 0;
+
+container.addEventListener('touchstart', e => {
+    touchStartY = e.changedTouches[0].screenY;
+});
+
+container.addEventListener('touchend', e => {
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = touchStartY - touchEndY;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            nextSlide();
+        } else {
+            prevSlide();
+        }
+    }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        nextSlide();
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        prevSlide();
+    }
+});
+
+// Mouse wheel support
+let isScrolling = false;
+container.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (!isScrolling) {
+        isScrolling = true;
+        if (e.deltaY > 0) {
+            nextSlide();
+        } else {
+            prevSlide();
+        }
+        setTimeout(() => {
+            isScrolling = false;
+        }, 500);
+    }
+});
+
+// Initialize
+if (totalSlides > 0) {
+    showSlide(0);
+}
+
+// Navbar background on scroll
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
+    }
+});
+</script>
+{% endblock %}

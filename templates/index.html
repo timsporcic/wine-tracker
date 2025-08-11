@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Wine Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero">
+        <h1>Your Personal Wine Journal</h1>
+        <p>Track, rate, and remember every wine you taste</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_wines }}</div>
+            <div class="stat-label">Total Wines</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ avg_rating }}</div>
+            <div class="stat-label">Average Rating</div>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <a href="{{ url_for('wine.add_wine') }}" class="btn btn-primary btn-large">
+            <span class="btn-icon">+</span>
+            Add New Wine
+        </a>
+        <a href="{{ url_for('main.gallery') }}" class="btn btn-secondary btn-large">
+            <span class="btn-icon">🖼</span>
+            Browse Gallery
+        </a>
+        <a href="{{ url_for('main.search_page') }}" class="btn btn-secondary btn-large">
+            <span class="btn-icon">🔍</span>
+            Search Wines
+        </a>
+    </div>
+
+    {% if recent_wines %}
+    <div class="recent-wines">
+        <h2>Recently Added</h2>
+        <div class="wine-grid">
+            {% for wine in recent_wines %}
+            <div class="wine-card">
+                <a href="{{ url_for('wine.view_wine', wine_id=wine.id) }}">
+                    <div class="wine-image">
+                        <img src="/{{ wine.thumbnail_path }}" 
+                             alt="{{ wine.wine_name }}" loading="lazy">
+                    </div>
+                    <div class="wine-info">
+                        <h3>{{ wine.wine_name }}</h3>
+                        <p class="vineyard">{{ wine.vineyard_name }}</p>
+                        <div class="wine-meta">
+                            <span class="year">{{ wine.vintage_year }}</span>
+                            <span class="rating">
+                                {% for i in range(wine.rating) %}★{% endfor %}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h2>No wines added yet</h2>
+        <p>Start building your wine collection by adding your first wine!</p>
+        <a href="{{ url_for('wine.add_wine') }}" class="btn btn-primary">Add Your First Wine</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

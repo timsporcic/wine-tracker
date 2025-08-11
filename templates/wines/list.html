@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}My Wines - Wine Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>My Wine Collection</h1>
+        <a href="{{ url_for('wine.add_wine') }}" class="btn btn-primary">Add New Wine</a>
+    </div>
+
+    {% if wines.items %}
+    <div class="wine-grid">
+        {% for wine in wines.items %}
+        <div class="wine-card">
+            <a href="{{ url_for('wine.view_wine', wine_id=wine.id) }}">
+                <div class="wine-image">
+                    <img src="/{{ wine.thumbnail_path }}" 
+                         alt="{{ wine.wine_name }}" loading="lazy">
+                </div>
+                <div class="wine-info">
+                    <h3>{{ wine.wine_name }}</h3>
+                    <p class="vineyard">{{ wine.vineyard_name }}</p>
+                    <div class="wine-meta">
+                        <span class="year">{{ wine.vintage_year }}</span>
+                        <span class="rating">
+                            {% for i in range(wine.rating) %}★{% endfor %}
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if wines.pages > 1 %}
+    <div class="pagination">
+        {% if wines.has_prev %}
+        <a href="{{ url_for('wine.list_wines', page=wines.prev_num) }}" class="btn btn-secondary">Previous</a>
+        {% endif %}
+        
+        <span class="page-info">Page {{ wines.page }} of {{ wines.pages }}</span>
+        
+        {% if wines.has_next %}
+        <a href="{{ url_for('wine.list_wines', page=wines.next_num) }}" class="btn btn-secondary">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+        <h2>No wines in your collection yet</h2>
+        <p>Start tracking your wine journey by adding your first wine!</p>
+        <a href="{{ url_for('wine.add_wine') }}" class="btn btn-primary">Add Your First Wine</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

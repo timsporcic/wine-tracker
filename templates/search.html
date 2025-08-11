@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Wine Tracker{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Search Wines</h1>
+    
+    <div class="search-form">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by wine or vineyard name..." 
+                   class="search-input" autocomplete="off">
+            <button id="searchBtn" class="search-btn">🔍</button>
+        </div>
+        <div id="suggestions" class="suggestions"></div>
+        
+        <div class="search-filters">
+            <div class="filter-group">
+                <label for="ratingFilter">Rating:</label>
+                <select id="ratingFilter" class="filter-select">
+                    <option value="">All</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="yearFrom">Year From:</label>
+                <input type="number" id="yearFrom" min="1800" max="2024" 
+                       placeholder="1990" class="filter-input">
+            </div>
+            
+            <div class="filter-group">
+                <label for="yearTo">Year To:</label>
+                <input type="number" id="yearTo" min="1800" max="2024" 
+                       placeholder="2024" class="filter-input">
+            </div>
+        </div>
+    </div>
+    
+    <div id="searchResults" class="search-results"></div>
+</div>
+
+<script>
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const suggestions = document.getElementById('suggestions');
+const searchResults = document.getElementById('searchResults');
+const ratingFilter = document.getElementById('ratingFilter');
+const yearFrom = document.getElementById('yearFrom');
+const yearTo = document.getElementById('yearTo');
+
+let searchTimeout;
+
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length >= 2) {
+        searchTimeout = setTimeout(() => {
+            fetch(`/api/wines/suggestions?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.suggestions.length > 0) {
+                        suggestions.innerHTML = data.suggestions.map(s => 
+                            `<div class="suggestion-item" data-value="${s.value}">
+                                <span class="suggestion-type">${s.type}</span>
+                                ${s.value}
+                            </div>`
+                        ).join('');
+                        suggestions.style.display = 'block';
+                    } else {
+                        suggestions.style.display = 'none';
+                    }
+                });
+        }, 300);
+    } else {
+        suggestions.style.display = 'none';
+    }
+});
+
+suggestions.addEventListener('click', function(e) {
+    if (e.target.classList.contains('suggestion-item')) {
+        searchInput.value = e.target.dataset.value;
+        suggestions.style.display = 'none';
+        performSearch();
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !suggestions.contains(e.target)) {
+        suggestions.style.display = 'none';
+    }
+});
+
+function performSearch() {
+    const query = searchInput.value.trim();
+    const rating = ratingFilter.value;
+    const yearFromVal = yearFrom.value;
+    const yearToVal = yearTo.value;
+    
+    let url = `/api/search?q=${encodeURIComponent(query)}`;
+    if (rating) url += `&rating=${rating}`;
+    if (yearFromVal) url += `&year_from=${yearFromVal}`;
+    if (yearToVal) url += `&year_to=${yearToVal}`;
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.wines.length > 0) {
+                searchResults.innerHTML = `
+                    <h2>Search Results (${data.total} wines found)</h2>
+                    <div class="wine-grid">
+                        ${data.wines.map(wine => `
+                            <div class="wine-card">
+                                <a href="/wines/${wine.id}">
+                                    <div class="wine-image">
+                                        <img src="/${wine.thumbnail_path}" 
+                                             alt="${wine.wine_name}" loading="lazy">
+                                    </div>
+                                    <div class="wine-info">
+                                        <h3>${wine.wine_name}</h3>
+                                        <p class="vineyard">${wine.vineyard_name}</p>
+                                        <div class="wine-meta">
+                                            <span class="year">${wine.vintage_year}</span>
+                                            <span class="rating">
+                                                ${'★'.repeat(wine.rating)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                searchResults.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No wines found</h2>
+                        <p>Try adjusting your search criteria</p>
+                    </div>
+                `;
+            }
+        });
+}
+
+searchBtn.addEventListener('click', performSearch);
+searchInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSearch();
+    }
+});
+
+ratingFilter.addEventListener('change', performSearch);
+yearFrom.addEventListener('change', performSearch);
+yearTo.addEventListener('change', performSearch);
+</script>
+{% endblock %}
