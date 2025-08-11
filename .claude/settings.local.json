@@ -11,6 +11,7 @@
       "Bash(ruff:*)",
       "Bash(touch:*)",
       "Bash(cat:*)",
+      "Bash(gh:*)",
       "Bash(ruff check:*)",
       "Bash(pytest:*)",
       "Bash(pip install:*)",
