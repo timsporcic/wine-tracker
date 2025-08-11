@@ -96,9 +96,6 @@ ENV/
 env.bak/
 venv.bak/
 
-# Claude
-.claude
-
 # mypy
 .mypy_cache/
 .dmypy.json
