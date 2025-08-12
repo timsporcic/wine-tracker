@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, send_from_directory
 from config import config
 from extensions import db, migrate, csrf
 
@@ -23,9 +23,6 @@ def create_app(config_name=None):
     app.register_blueprint(main.bp)
     app.register_blueprint(wine.bp)
     app.register_blueprint(api.bp)
-    
-    # Add route to serve uploaded images
-    from flask import send_from_directory
     
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
